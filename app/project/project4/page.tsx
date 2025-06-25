@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useLayoutEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Contrast, ArrowUp, Play } from "lucide-react"
+import { ArrowLeft, ArrowUp, Play } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function CitrusCase() {
   const [isDarkMode, setIsDarkMode] = useState(true)
@@ -12,17 +13,24 @@ export default function CitrusCase() {
   const [showVideo, setShowVideo] = useState(false)
   const topRef = useRef<HTMLDivElement>(null)
 
-  // Load language preference from localStorage
-  useEffect(() => {
+  // Load theme and language preferences from localStorage before render
+  useLayoutEffect(() => {
+    const savedTheme = localStorage.getItem("portfolioTheme")
     const savedLanguage = localStorage.getItem("portfolioLanguage")
+
+    if (savedTheme !== null) {
+      setIsDarkMode(savedTheme === "dark")
+    }
     if (savedLanguage !== null) {
       setIsRussian(savedLanguage === "ru")
     }
   }, [])
 
-  // Toggle dark mode
+  // Toggle dark mode and save to localStorage
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
+    const newTheme = !isDarkMode
+    setIsDarkMode(newTheme)
+    localStorage.setItem("portfolioTheme", newTheme ? "dark" : "light")
   }
 
   // Toggle language and save to localStorage
@@ -105,12 +113,7 @@ export default function CitrusCase() {
         >
           {isRussian ? "EN" : "RU"}
         </button>
-        <button
-          onClick={toggleTheme}
-          className={`p-2 transition-colors duration-300 ${isDarkMode ? "text-[#f0f0f0]" : "text-[#333333]"}`}
-        >
-          <Contrast size={20} />
-        </button>
+        <ThemeToggle isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
       </div>
 
       {/* Header Section */}
@@ -128,6 +131,56 @@ export default function CitrusCase() {
             <div>
               <div className={`text-xs leading-relaxed ${isDarkMode ? "text-[#b0b0b0]" : "text-gray-600"}`}>
                 <p className="mb-6">{currentContent.description}</p>
+              </div>
+            </div>
+            {/* Tags Section */}
+            <div className="flex flex-wrap gap-3 mt-6">
+              <div className="group">
+                <div
+                  className={`px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-300 cursor-default border ${
+                    isDarkMode
+                      ? "bg-[#2D1B69]/20 text-[#A78BFA] border-[#2D1B69]/30 hover:bg-[#2D1B69]/30 hover:border-[#A78BFA]/50"
+                      : "bg-[#F4F3FF] text-[#7C3AED] border-[#E9D5FF] hover:bg-[#EDE9FE] hover:border-[#A78BFA]/50"
+                  }`}
+                >
+                  creative direction
+                </div>
+              </div>
+
+              <div className="group">
+                <div
+                  className={`px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-300 cursor-default border ${
+                    isDarkMode
+                      ? "bg-[#7F1D1D]/20 text-[#F87171] border-[#7F1D1D]/30 hover:bg-[#7F1D1D]/30 hover:border-[#F87171]/50"
+                      : "bg-[#FEF2F2] text-[#DC2626] border-[#FECACA] hover:bg-[#FEE2E2] hover:border-[#F87171]/50"
+                  }`}
+                >
+                  brand positioning
+                </div>
+              </div>
+
+              <div className="group">
+                <div
+                  className={`px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-300 cursor-default border ${
+                    isDarkMode
+                      ? "bg-[#1E3A8A]/20 text-[#60A5FA] border-[#1E3A8A]/30 hover:bg-[#1E3A8A]/30 hover:border-[#60A5FA]/50"
+                      : "bg-[#EFF6FF] text-[#2563EB] border-[#DBEAFE] hover:bg-[#DBEAFE] hover:border-[#60A5FA]/50"
+                  }`}
+                >
+                  copywriting
+                </div>
+              </div>
+
+              <div className="group">
+                <div
+                  className={`px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-300 cursor-default border ${
+                    isDarkMode
+                      ? "bg-[#92400E]/20 text-[#FBBF24] border-[#92400E]/30 hover:bg-[#92400E]/30 hover:border-[#FBBF24]/50"
+                      : "bg-[#FFFBEB] text-[#D97706] border-[#FED7AA] hover:bg-[#FEF3C7] hover:border-[#FBBF24]/50"
+                  }`}
+                >
+                  launch strategy
+                </div>
               </div>
             </div>
           </div>

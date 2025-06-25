@@ -1,29 +1,40 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useLayoutEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Contrast, ArrowUp } from "lucide-react"
+import { ArrowLeft, ArrowUp, Play } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function S7AddOnsCase() {
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [isRussian, setIsRussian] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [loadedVideos, setLoadedVideos] = useState<Set<number>>(new Set())
+  const [playingVideos, setPlayingVideos] = useState<Set<number>>(new Set())
   const topRef = useRef<HTMLDivElement>(null)
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
+  const videoContainerRefs = useRef<(HTMLDivElement | null)[]>([])
   const [videoErrors, setVideoErrors] = useState<{ [key: number]: boolean }>({})
 
-  // Load language preference from localStorage
-  useEffect(() => {
+  // Load theme and language preferences from localStorage before render
+  useLayoutEffect(() => {
+    const savedTheme = localStorage.getItem("portfolioTheme")
     const savedLanguage = localStorage.getItem("portfolioLanguage")
+
+    if (savedTheme !== null) {
+      setIsDarkMode(savedTheme === "dark")
+    }
     if (savedLanguage !== null) {
       setIsRussian(savedLanguage === "ru")
     }
   }, [])
 
-  // Toggle dark mode
+  // Toggle dark mode and save to localStorage
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
+    const newTheme = !isDarkMode
+    setIsDarkMode(newTheme)
+    localStorage.setItem("portfolioTheme", newTheme ? "dark" : "light")
   }
 
   // Toggle language and save to localStorage
@@ -47,37 +58,77 @@ export default function S7AddOnsCase() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Setup Intersection Observer for videos
+  // Setup Intersection Observer for lazy loading videos
   useEffect(() => {
-    const options = {
+    const lazyLoadOptions = {
+      root: null,
+      rootMargin: "100px", // Start loading 100px before the video enters viewport
+      threshold: 0.1,
+    }
+
+    const lazyLoadObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const index = Number.parseInt(entry.target.getAttribute("data-video-index") || "0")
+          setLoadedVideos((prev) => new Set([...prev, index]))
+          lazyLoadObserver.unobserve(entry.target)
+        }
+      })
+    }, lazyLoadOptions)
+
+    // Observe all video containers
+    videoContainerRefs.current.forEach((container, index) => {
+      if (container) {
+        container.setAttribute("data-video-index", index.toString())
+        lazyLoadObserver.observe(container)
+      }
+    })
+
+    return () => {
+      lazyLoadObserver.disconnect()
+    }
+  }, [])
+
+  // Setup Intersection Observer for video playback
+  useEffect(() => {
+    const playbackOptions = {
       root: null,
       rootMargin: "0px",
       threshold: 0.5,
     }
 
-    const observers: IntersectionObserver[] = []
+    const playbackObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const index = Number.parseInt(entry.target.getAttribute("data-video-index") || "0")
+        const video = videoRefs.current[index]
 
+        if (!video || !loadedVideos.has(index)) return
+
+        if (entry.isIntersecting) {
+          video.play().catch((e) => console.log("Auto-play prevented:", e))
+          setPlayingVideos((prev) => new Set([...prev, index]))
+        } else {
+          video.pause()
+          setPlayingVideos((prev) => {
+            const newSet = new Set(prev)
+            newSet.delete(index)
+            return newSet
+          })
+        }
+      })
+    }, playbackOptions)
+
+    // Observe loaded videos
     videoRefs.current.forEach((video, index) => {
-      if (!video) return
-
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            video.play().catch((e) => console.log("Auto-play prevented:", e))
-          } else {
-            video.pause()
-          }
-        })
-      }, options)
-
-      observer.observe(video)
-      observers.push(observer)
+      if (video && loadedVideos.has(index)) {
+        playbackObserver.observe(video)
+      }
     })
 
     return () => {
-      observers.forEach((observer) => observer.disconnect())
+      playbackObserver.disconnect()
     }
-  }, [])
+  }, [loadedVideos])
 
   // Scroll to top function
   const scrollToTop = () => {
@@ -87,17 +138,17 @@ export default function S7AddOnsCase() {
   const content = {
     ru: {
       title: "ДОПОЛНИТЕЛЬНЫЕ ПРОДУКТЫ S7",
-      description:
-        "Промо-кампания для продвижения дополнительных услуг S7 Airlines. Арт-дирекшн совместно cо студией ONY.",
+      description: "Промо-кампания для продвижения дополнительных услуг S7 Airlines.\n\nАгентство: ONY",
       back: "Назад",
       top: "Наверх",
+      loading: "Загрузка...",
     },
     en: {
       title: "S7 ADD-ONS",
-      description:
-        "Promotional campaign for additional services of S7 Airlines. Art direction in collaboration with ONY studio.",
+      description: "Promotional campaign for additional services of S7 Airlines.\n\nAgency: ONY",
       back: "Back",
       top: "Top",
+      loading: "Loading...",
     },
   }
 
@@ -153,39 +204,96 @@ export default function S7AddOnsCase() {
   ]
 
   const handleVideoError = (index: number) => {
-    console.log(`Video error at index ${index}`)
+    console.warn(`Video error at index ${index}: ${videos[index]?.src}`)
     setVideoErrors((prev) => ({ ...prev, [index]: true }))
   }
 
-  useEffect(() => {
-    console.log("S7 AddOns component mounted")
-    console.log("Videos array:", videos)
-  }, [])
+  const handleVideoLoad = (index: number) => {
+    console.log(`Video ${index} loaded successfully: ${videos[index]?.src}`)
+  }
 
-  // Preload first two videos
-  useEffect(() => {
-    const preloadVideos = async () => {
-      try {
-        // Preload first two videos
-        const videoPromises = videos.slice(0, 2).map((video) => {
-          return new Promise((resolve, reject) => {
-            const videoElement = document.createElement("video")
-            videoElement.src = video.src
-            videoElement.preload = "auto"
-            videoElement.onloadeddata = () => resolve(video.src)
-            videoElement.onerror = () => reject(`Failed to preload ${video.src}`)
-          })
-        })
+  // Video placeholder component
+  const VideoPlaceholder = ({ video, index, className }: { video: any; index: number; className: string }) => (
+    <div
+      className={`${className} bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center relative overflow-hidden`}
+    >
+      <div className="absolute inset-0 bg-black/20"></div>
+      <div className="relative z-10 flex flex-col items-center justify-center text-center p-8">
+        <div
+          className={`rounded-full p-4 mb-4 transition-all duration-300 ${
+            isDarkMode ? "bg-white/10 text-white" : "bg-black/10 text-black"
+          }`}
+        >
+          <Play size={32} />
+        </div>
+        <p
+          className={`text-sm font-mono uppercase tracking-wider mb-2 ${
+            isDarkMode ? "text-white/80" : "text-black/80"
+          }`}
+        >
+          {currentContent.loading}
+        </p>
+        <p className={`text-xs ${isDarkMode ? "text-white/60" : "text-black/60"}`}>{video.alt}</p>
+      </div>
+      {/* Animated loading dots */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-1">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className={`w-2 h-2 rounded-full animate-pulse ${isDarkMode ? "bg-white/40" : "bg-black/40"}`}
+            style={{
+              animationDelay: `${i * 0.2}s`,
+              animationDuration: "1.4s",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
 
-        await Promise.all(videoPromises)
-        console.log("First two videos preloaded successfully")
-      } catch (error) {
-        console.error("Error preloading videos:", error)
-      }
+  // Render video or placeholder
+  const renderVideo = (video: any, index: number, className: string) => {
+    const isLoaded = loadedVideos.has(index)
+    const hasError = videoErrors[index]
+
+    if (!isLoaded) {
+      return (
+        <div ref={(el) => (videoContainerRefs.current[index] = el)} className={className}>
+          <VideoPlaceholder video={video} index={index} className="w-full h-full" />
+        </div>
+      )
     }
 
-    preloadVideos()
-  }, [])
+    if (hasError) {
+      return (
+        <div className={`${className} bg-gray-200 dark:bg-gray-800 flex items-center justify-center`}>
+          <div className="text-center p-8">
+            <p className="text-gray-500 text-sm mb-2">Video unavailable</p>
+            <p className="text-gray-400 text-xs">{video.alt}</p>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className={className}>
+        <video
+          ref={(el) => (videoRefs.current[index] = el)}
+          className="w-full h-full object-cover"
+          playsInline
+          muted
+          loop
+          preload="metadata"
+          poster={video.poster}
+          onError={() => handleVideoError(index)}
+          onLoadedData={() => handleVideoLoad(index)}
+          onCanPlay={() => console.log(`Video ${index} can play: ${video.src}`)}
+        >
+          <source src={video.src} type="video/mp4" />
+        </video>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -197,7 +305,7 @@ export default function S7AddOnsCase() {
       {/* Back Button */}
       <Link
         href="/work"
-        className={`fixed top-10 left-6 flex items-center space-x-1 text-xs px-3 py-1.5 rounded-xl backdrop-blur-sm transition-all duration-300 font-mono uppercase z-50 ${
+        className={`fixed top-10 left-6 flex items-center space-x-1 text-xs px-3 py-1.5 rounded-xl backdrop-blur-sm transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] font-mono uppercase z-50 hover:scale-110 ${
           isDarkMode ? "bg-white/10 text-[#f0f0f0] shadow-lg" : "bg-black text-white"
         }`}
       >
@@ -209,18 +317,13 @@ export default function S7AddOnsCase() {
       <div className="fixed top-10 right-6 flex items-center space-x-2 z-50">
         <button
           onClick={toggleLanguage}
-          className={`px-2 py-1 text-xs font-mono uppercase transition-colors duration-300 ${
+          className={`px-2 py-1 text-xs font-mono uppercase transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 ${
             isDarkMode ? "text-[#f0f0f0]" : "text-[#333333]"
           }`}
         >
           {isRussian ? "EN" : "RU"}
         </button>
-        <button
-          onClick={toggleTheme}
-          className={`p-2 transition-colors duration-300 ${isDarkMode ? "text-[#f0f0f0]" : "text-[#333333]"}`}
-        >
-          <Contrast size={20} />
-        </button>
+        <ThemeToggle isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
       </div>
 
       {/* Header Section */}
@@ -240,6 +343,44 @@ export default function S7AddOnsCase() {
                 <p className="mb-6">{currentContent.description}</p>
               </div>
             </div>
+            {/* Tags Section */}
+            <div className="flex flex-wrap gap-3 mt-6">
+              <div className="group">
+                <div
+                  className={`px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-300 cursor-default border ${
+                    isDarkMode
+                      ? "bg-[#2D1B69]/20 text-[#A78BFA] border-[#2D1B69]/30 hover:bg-[#2D1B69]/30 hover:border-[#A78BFA]/50"
+                      : "bg-[#F4F3FF] text-[#7C3AED] border-[#E9D5FF] hover:bg-[#EDE9FE] hover:border-[#A78BFA]/50"
+                  }`}
+                >
+                  creative direction
+                </div>
+              </div>
+
+              <div className="group">
+                <div
+                  className={`px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-300 cursor-default border ${
+                    isDarkMode
+                      ? "bg-[#1E3A8A]/20 text-[#60A5FA] border-[#1E3A8A]/30 hover:bg-[#1E3A8A]/30 hover:border-[#60A5FA]/50"
+                      : "bg-[#EFF6FF] text-[#2563EB] border-[#DBEAFE] hover:bg-[#DBEAFE] hover:border-[#60A5FA]/50"
+                  }`}
+                >
+                  copywriting
+                </div>
+              </div>
+
+              <div className="group">
+                <div
+                  className={`px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-300 cursor-default border ${
+                    isDarkMode
+                      ? "bg-[#064E3B]/20 text-[#34D399] border-[#064E3B]/30 hover:bg-[#064E3B]/30 hover:border-[#34D399]/50"
+                      : "bg-[#ECFDF5] text-[#059669] border-[#D1FAE5] hover:bg-[#D1FAE5] hover:border-[#34D399]/50"
+                  }`}
+                >
+                  art direction
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -249,44 +390,12 @@ export default function S7AddOnsCase() {
         <div className="space-y-8">
           {videos.map((video, index) => {
             if (video.size === "full") {
-              return (
-                <div key={index} className="w-full h-screen relative">
-                  <video
-                    ref={(el) => (videoRefs.current[index] = el)}
-                    className="w-full h-full object-cover"
-                    playsInline
-                    muted
-                    loop
-                    autoPlay={video.autoPlay}
-                    preload="auto"
-                    poster={video.poster}
-                    onError={() => handleVideoError(index)}
-                    onLoadStart={() => console.log(`Loading video ${index}: ${video.src}`)}
-                  >
-                    <source src={video.src} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                </div>
-              )
+              return <div key={index}>{renderVideo(video, index, "w-full h-screen relative")}</div>
             } else if (video.size === "wide") {
               return (
                 <div key={index} className="container mx-auto px-6">
-                  <div className="aspect-[21/9] relative overflow-hidden rounded-lg max-w-6xl mx-auto">
-                    <video
-                      ref={(el) => (videoRefs.current[index] = el)}
-                      className="w-full h-full object-cover"
-                      playsInline
-                      muted
-                      loop
-                      autoPlay={video.autoPlay}
-                      preload="auto"
-                      poster={video.poster}
-                      onError={() => handleVideoError(index)}
-                      onLoadStart={() => console.log(`Loading video ${index}: ${video.src}`)}
-                    >
-                      <source src={video.src} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
+                  <div className="max-w-6xl mx-auto">
+                    {renderVideo(video, index, "aspect-[21/9] relative overflow-hidden rounded-lg")}
                   </div>
                 </div>
               )
@@ -297,40 +406,8 @@ export default function S7AddOnsCase() {
                 return (
                   <div key={`pair-${index}`} className="container mx-auto px-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-                      <div className="aspect-video relative overflow-hidden rounded-lg">
-                        <video
-                          ref={(el) => (videoRefs.current[index] = el)}
-                          className="w-full h-full object-cover"
-                          playsInline
-                          muted
-                          loop
-                          autoPlay={video.autoPlay}
-                          preload="auto"
-                          poster={video.poster}
-                          onError={() => handleVideoError(index)}
-                          onLoadStart={() => console.log(`Loading video ${index}: ${video.src}`)}
-                        >
-                          <source src={video.src} type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
-                      <div className="aspect-video relative overflow-hidden rounded-lg">
-                        <video
-                          ref={(el) => (videoRefs.current[index + 1] = el)}
-                          className="w-full h-full object-cover"
-                          playsInline
-                          muted
-                          loop
-                          autoPlay={nextVideo.autoPlay}
-                          preload="auto"
-                          poster={nextVideo.poster}
-                          onError={() => handleVideoError(index + 1)}
-                          onLoadStart={() => console.log(`Loading video ${index + 1}: ${nextVideo.src}`)}
-                        >
-                          <source src={nextVideo.src} type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
+                      {renderVideo(video, index, "aspect-video relative overflow-hidden rounded-lg")}
+                      {renderVideo(nextVideo, index + 1, "aspect-video relative overflow-hidden rounded-lg")}
                     </div>
                   </div>
                 )
@@ -342,23 +419,7 @@ export default function S7AddOnsCase() {
                 return (
                   <div key={index} className="container mx-auto px-6">
                     <div className="max-w-3xl mx-auto">
-                      <div className="aspect-video relative overflow-hidden rounded-lg">
-                        <video
-                          ref={(el) => (videoRefs.current[index] = el)}
-                          className="w-full h-full object-cover"
-                          playsInline
-                          muted
-                          loop
-                          autoPlay={video.autoPlay}
-                          preload="auto"
-                          poster={video.poster}
-                          onError={() => handleVideoError(index)}
-                          onLoadStart={() => console.log(`Loading video ${index}: ${video.src}`)}
-                        >
-                          <source src={video.src} type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
+                      {renderVideo(video, index, "aspect-video relative overflow-hidden rounded-lg")}
                     </div>
                   </div>
                 )
@@ -442,7 +503,7 @@ export default function S7AddOnsCase() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-24 right-6 p-3 rounded-full transition-all duration-300 z-50 flex items-center space-x-2 font-mono text-xs uppercase bg-black text-white hover:bg-gray-800 shadow-lg"
+          className="fixed bottom-24 right-6 p-3 rounded-full transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-50 flex items-center space-x-2 font-mono text-xs uppercase bg-black text-white hover:bg-gray-800 hover:scale-110 shadow-lg"
         >
           <ArrowUp size={14} />
           <span>{currentContent.top}</span>

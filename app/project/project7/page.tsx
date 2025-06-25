@@ -5,12 +5,14 @@ import Link from "next/link"
 import { ArrowLeft, ArrowUp, Play } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
-export default function BeautifulWorldCase() {
+export default function ReliableSupportCase() {
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [isRussian, setIsRussian] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
-  const [showVideo, setShowVideo] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [showCustomControls, setShowCustomControls] = useState(true)
   const topRef = useRef<HTMLDivElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   // Load theme and language preferences from localStorage before render
   useLayoutEffect(() => {
@@ -58,38 +60,99 @@ export default function BeautifulWorldCase() {
     topRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
+  // Video control functions
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause()
+      } else {
+        videoRef.current.play()
+      }
+      // Note: setIsPlaying will be handled by video events
+    }
+  }
+
+  const handleVideoContainerClick = () => {
+    if (showCustomControls || !isPlaying) {
+      togglePlay()
+    } else {
+      if (videoRef.current) {
+        // If video is playing and custom controls are hidden,
+        // clicking the container could, for example, toggle browser controls
+        // or pause. For now, let's make it pause.
+        videoRef.current.pause()
+      }
+    }
+  }
+
+  useEffect(() => {
+    const videoElement = videoRef.current
+    if (videoElement) {
+      const handlePlayEvent = () => {
+        setIsPlaying(true)
+        setShowCustomControls(false)
+        videoElement.controls = true
+      }
+      const handlePauseEvent = () => {
+        setIsPlaying(false)
+        setShowCustomControls(true)
+        videoElement.controls = false
+      }
+      const handleEndedEvent = () => {
+        setIsPlaying(false)
+        setShowCustomControls(true)
+        videoElement.controls = false
+      }
+
+      videoElement.addEventListener("play", handlePlayEvent)
+      videoElement.addEventListener("pause", handlePauseEvent)
+      videoElement.addEventListener("ended", handleEndedEvent)
+
+      // Initial check for video state if it autoplays or is preloaded and played
+      if (!videoElement.paused) {
+        handlePlayEvent()
+      }
+
+      return () => {
+        videoElement.removeEventListener("play", handlePlayEvent)
+        videoElement.removeEventListener("pause", handlePauseEvent)
+        videoElement.removeEventListener("ended", handleEndedEvent)
+      }
+    }
+  }, [])
+
   const content = {
     ru: {
-      title: "КАК ПРЕКРАСЕН ЭТОТ МИР",
-      description: `Исполнение: Иван Дорн
+      title: "НАДЕЖНАЯ ПОДДЕРЖКА",
+      description: `Agency: Instinct
 
-General Producer: Dmitry Bocharov
-Creative Director: Gatis Murnieks
-Creative Producer: Alyosha Starodubov
-Production: Stereotactic
-Digital: Creative People
-Performance: Ivan Dorn`,
+Director: Murad Nogmov
+
+Production: Bazelevs`,
       back: "Назад",
       top: "Наверх",
-      watchVideo: "Смотреть видео",
+      play: "Воспроизвести",
+      pause: "Пауза",
     },
     en: {
-      title: "WHAT A BEAUTIFUL WORLD",
-      description: `Covered by Ivan Dorn
+      title: "RELIABLE SUPPORT",
+      description: `Agency: Instinct
 
-General Producer: Dmitry Bocharov
-Creative Director: Gatis Murnieks
-Creative Producer: Alyosha Starodubov
-Production: Stereotactic
-Digital: Creative People
-Performance: Ivan Dorn`,
+Director: Murad Nogmov
+
+Production: Bazelevs`,
       back: "Back",
       top: "Top",
-      watchVideo: "Watch video",
+      play: "Play",
+      pause: "Pause",
     },
   }
 
   const currentContent = isRussian ? content.ru : content.en
+
+  // Determine if the dark overlay should be shown (only for initial poster state)
+  const showDarkOverlay =
+    showCustomControls && (!videoRef.current || (videoRef.current.currentTime === 0 && !isPlaying))
 
   return (
     <div
@@ -134,16 +197,14 @@ Performance: Ivan Dorn`,
 
           {/* Right Column - Description */}
           <div>
-            <div className={`text-xs leading-relaxed ${isDarkMode ? "text-[#b0b0b0]" : "text-gray-600"}`}>
-              {currentContent.description.split("\n\n").map((paragraph, index) => (
-                <div key={index} className="mb-6">
-                  {paragraph.split("\n").map((line, lineIndex) => (
-                    <p key={lineIndex} className="mb-1">
-                      {line}
-                    </p>
-                  ))}
-                </div>
-              ))}
+            <div>
+              <div className={`text-xs leading-relaxed ${isDarkMode ? "text-[#b0b0b0]" : "text-gray-600"}`}>
+                {currentContent.description.split("\n\n").map((paragraph, index) => (
+                  <p key={index} className="mb-6">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
             </div>
             {/* Tags Section */}
             <div className="flex flex-wrap gap-3 mt-6">
@@ -158,18 +219,6 @@ Performance: Ivan Dorn`,
                   creative direction
                 </div>
               </div>
-
-              <div className="group">
-                <div
-                  className={`px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-300 cursor-default border ${
-                    isDarkMode
-                      ? "bg-[#1E3A8A]/20 text-[#60A5FA] border-[#1E3A8A]/30 hover:bg-[#1E3A8A]/30 hover:border-[#60A5FA]/50"
-                      : "bg-[#EFF6FF] text-[#2563EB] border-[#DBEAFE] hover:bg-[#DBEAFE] hover:border-[#60A5FA]/50"
-                  }`}
-                >
-                  copywriting
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -178,36 +227,40 @@ Performance: Ivan Dorn`,
       {/* Video Section */}
       <div className="container mx-auto px-6 pb-16">
         <div className="max-w-4xl mx-auto">
-          {!showVideo ? (
-            <div
-              className="relative aspect-video w-full cursor-pointer overflow-hidden rounded-lg bg-black"
-              onClick={() => setShowVideo(true)}
+          <div
+            className="relative aspect-video w-full overflow-hidden rounded-lg bg-black cursor-pointer group"
+            onClick={handleVideoContainerClick}
+          >
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              playsInline
+              preload="metadata"
+              poster="/video-previews/reliable-support-preview.jpeg"
             >
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <div className={`flex flex-col items-center gap-4 ${isDarkMode ? "text-white" : "text-white"}`}>
-                  <div className="rounded-full bg-white/20 p-4 backdrop-blur-sm">
-                    <Play size={32} className="text-white" />
-                  </div>
-                  <span className="font-mono text-sm uppercase">{currentContent.watchVideo}</span>
-                </div>
+              <source src="/videos/reliable-support.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+
+            {/* Custom Play Button Overlay */}
+            {showCustomControls && (
+              <div
+                className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 
+                  ${showDarkOverlay ? "bg-black/30 group-hover:bg-black/50" : ""}`}
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    togglePlay()
+                  }}
+                  className="rounded-full bg-white/20 p-4 backdrop-blur-sm transition-all duration-300 hover:bg-white/30 hover:scale-110"
+                  aria-label={currentContent.play}
+                >
+                  <Play size={48} className="text-white ml-1" />
+                </button>
               </div>
-              <img
-                src="/video-previews/beautiful-world-preview.jpeg"
-                alt="S7 Airlines - What a Beautiful World"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ) : (
-            <div className="aspect-video w-full">
-              <iframe
-                className="w-full h-full rounded-lg"
-                src="https://www.youtube.com/embed/-Yt-i84WHTo?autoplay=1"
-                title="S7 Airlines - What a Beautiful World"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 

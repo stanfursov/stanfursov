@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useLayoutEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Contrast, ArrowUp, Play } from "lucide-react"
+import { ArrowLeft, Play, ArrowUp } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function SiberiaCase() {
   const [isDarkMode, setIsDarkMode] = useState(true)
@@ -12,17 +13,24 @@ export default function SiberiaCase() {
   const topRef = useRef<HTMLDivElement>(null)
   const [showVideo, setShowVideo] = useState(false)
 
-  // Load language preference from localStorage
-  useEffect(() => {
+  // Load theme and language preferences from localStorage before render
+  useLayoutEffect(() => {
+    const savedTheme = localStorage.getItem("portfolioTheme")
     const savedLanguage = localStorage.getItem("portfolioLanguage")
+
+    if (savedTheme !== null) {
+      setIsDarkMode(savedTheme === "dark")
+    }
     if (savedLanguage !== null) {
       setIsRussian(savedLanguage === "ru")
     }
   }, [])
 
-  // Toggle dark mode
+  // Toggle dark mode and save to localStorage
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
+    const newTheme = !isDarkMode
+    setIsDarkMode(newTheme)
+    localStorage.setItem("portfolioTheme", newTheme ? "dark" : "light")
   }
 
   // Toggle language and save to localStorage
@@ -129,12 +137,7 @@ Prominent companies, including Unilever, Yandex, and Tinkoff, joined the initiat
         >
           {isRussian ? "EN" : "RU"}
         </button>
-        <button
-          onClick={toggleTheme}
-          className={`p-2 transition-colors duration-300 ${isDarkMode ? "text-[#f0f0f0]" : "text-[#333333]"}`}
-        >
-          <Contrast size={20} />
-        </button>
+        <ThemeToggle isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
       </div>
 
       {/* Header Section */}
@@ -156,6 +159,20 @@ Prominent companies, including Unilever, Yandex, and Tinkoff, joined the initiat
                     {paragraph}
                   </p>
                 ))}
+              </div>
+            </div>
+            {/* Tags Section */}
+            <div className="flex flex-wrap gap-3 mt-6">
+              <div className="group">
+                <div
+                  className={`px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-300 cursor-default border ${
+                    isDarkMode
+                      ? "bg-[#2D1B69]/20 text-[#A78BFA] border-[#2D1B69]/30 hover:bg-[#2D1B69]/30 hover:border-[#A78BFA]/50"
+                      : "bg-[#F4F3FF] text-[#7C3AED] border-[#E9D5FF] hover:bg-[#EDE9FE] hover:border-[#A78BFA]/50"
+                  }`}
+                >
+                  creative direction
+                </div>
               </div>
             </div>
           </div>

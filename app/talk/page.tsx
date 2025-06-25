@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Mail, Send, Check } from "lucide-react"
@@ -28,7 +28,7 @@ export default function Talk() {
       },
     },
     ru: {
-      message1: "Ну что ж, погнали.",
+      message1: "Итак, поехали.",
       message2: "Начнем с бонусного контента — проектов, которые не 🗃️ вместились в основное портфолио? Напишите мне.",
       seen: "Прочитано",
       email: "Почта",
@@ -41,9 +41,14 @@ export default function Talk() {
     },
   }
 
-  // Load language preference from localStorage
-  useEffect(() => {
+  // Load theme and language preferences from localStorage before render
+  useLayoutEffect(() => {
+    const savedTheme = localStorage.getItem("portfolioTheme")
     const savedLanguage = localStorage.getItem("portfolioLanguage")
+
+    if (savedTheme !== null) {
+      setIsDarkMode(savedTheme === "dark")
+    }
     if (savedLanguage !== null) {
       setIsRussian(savedLanguage === "ru")
     }
@@ -51,7 +56,9 @@ export default function Talk() {
 
   // Toggle dark mode
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
+    const newTheme = !isDarkMode
+    setIsDarkMode(newTheme)
+    localStorage.setItem("portfolioTheme", newTheme ? "dark" : "light")
   }
 
   // Toggle language and save to localStorage
@@ -141,16 +148,14 @@ export default function Talk() {
 
       {/* Chat Container - Centered */}
       <div className="flex items-center justify-center min-h-screen">
-        <div
-          className={`flex flex-col ${isMobile ? "items-center w-full" : "items-start"} relative max-w-md px-4 sm:px-0`}
-        >
-          {/* Message 1 - No Avatar */}
+        <div className={`flex flex-col items-start relative max-w-md px-4 sm:px-0`}>
+          {/* Message 1 - No Avatar, always left aligned */}
           {visibleMessages > 0 && (
             <div
-              className={`flex ${isMobile ? "justify-center w-full" : "items-end"} mb-2 relative transition-all duration-700 ease-[cubic-bezier(0.23, 1, 0.32, 1)] animate-in fade-in slide-in-from-bottom-2 duration-700`}
+              className={`flex items-end mb-2 relative transition-all duration-700 ease-[cubic-bezier(0.23, 1, 0.32, 1)] animate-in fade-in slide-in-from-bottom-2 duration-700`}
             >
               <div
-                className={`px-4 py-3 rounded-2xl ${isMobile ? "max-w-[250px]" : "max-w-[273px]"} shadow-lg text-xs leading-relaxed transition-all duration-300 ${
+                className={`px-4 py-3 rounded-2xl max-w-[273px] shadow-lg text-xs leading-relaxed transition-all duration-300 ${
                   isDarkMode ? "bg-[#1E1E1E] text-[#b0b0b0]" : "bg-white text-black shadow-sm"
                 }`}
               >

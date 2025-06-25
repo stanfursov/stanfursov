@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useLayoutEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Check } from "lucide-react"
@@ -48,9 +48,14 @@ export default function Home() {
     },
   }
 
-  // Load language preference from localStorage
-  useEffect(() => {
+  // Load theme and language preferences from localStorage before render
+  useLayoutEffect(() => {
+    const savedTheme = localStorage.getItem("portfolioTheme")
     const savedLanguage = localStorage.getItem("portfolioLanguage")
+
+    if (savedTheme !== null) {
+      setIsDarkMode(savedTheme === "dark")
+    }
     if (savedLanguage !== null) {
       setIsRussian(savedLanguage === "ru")
     }
@@ -58,7 +63,9 @@ export default function Home() {
 
   // Toggle dark mode
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
+    const newTheme = !isDarkMode
+    setIsDarkMode(newTheme)
+    localStorage.setItem("portfolioTheme", newTheme ? "dark" : "light")
   }
 
   // Toggle language and save to localStorage

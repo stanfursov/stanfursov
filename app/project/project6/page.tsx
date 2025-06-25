@@ -5,12 +5,12 @@ import Link from "next/link"
 import { ArrowLeft, ArrowUp, Play } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
-export default function BrightLineCase() {
+export default function PocketCase() {
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [isRussian, setIsRussian] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
-  const [showVideo, setShowVideo] = useState(false)
   const topRef = useRef<HTMLDivElement>(null)
+  const [showVideo, setShowVideo] = useState(false)
 
   // Load theme and language preferences from localStorage before render
   useLayoutEffect(() => {
@@ -60,53 +60,28 @@ export default function BrightLineCase() {
 
   const content = {
     ru: {
-      title: "ГДЕ НАЧИНАЕТСЯ СВЕТЛАЯ ПОЛОСА",
-      description: `Рекламная кампания S7 Airlines под названием «Где начинается светлая полоса?» была запущена в 2023 году с целью вдохновить людей на путешествия и показать, что светлую полосу в жизни не обязательно ждать — её можно создавать самому.
+      title: "КАРМАН",
+      description: `Agency: Instinct
 
-Идея кампании — не просто ждать счастья, а активно создавать его, отправляясь в путешествия и открывая новые горизонты. Это отражает внутренние устремления бренда и его миссию вдохновлять людей на развитие навыка счастья через путешествия.`,
+Director: Vladimir Sorokin
+
+Production: Bazelevs`,
       back: "Назад",
       top: "Наверх",
-      watchVideo: "Смотреть видео",
     },
     en: {
-      title: "WHERE DOES THE BRIGHT LINE BEGIN?",
-      description: `In 2023, S7 Airlines unveiled its advertising campaign titled "Where Does the Bright Line Begin?" The aim of the campaign is to inspire people to travel and convey the message that rather than waiting for a moment of joy, individuals can create their own.
+      title: "POCKET",
+      description: `Agency: Instinct
 
-At the heart of this campaign lies the belief that happiness is not something to be passively awaited, but rather an experience to be actively pursued through exploration and adventure. This philosophy aligns with the brand's core mission: to empower individuals to cultivate their own sense of happiness through travel and the discovery of new horizons.`,
+Director: Vladimir Sorokin
+
+Production: Bazelevs`,
       back: "Back",
       top: "Top",
-      watchVideo: "Watch video",
     },
   }
 
   const currentContent = isRussian ? content.ru : content.en
-
-  const images = [
-    {
-      src: "/bright-line-images/girl-ocean.jpg",
-      alt: "Girl by the ocean - Where the bright line begins",
-    },
-    {
-      src: "/bright-line-images/snowboarder.jpg",
-      alt: "Snowboarder in action - Where the bright line begins",
-    },
-    {
-      src: "/bright-line-images/man-horse.jpg",
-      alt: "Man with horse - Where the bright line begins",
-    },
-    {
-      src: "/bright-line-images/underwater.jpg",
-      alt: "Underwater swimming - Where the bright line begins",
-    },
-    {
-      src: "/bright-line-images/airplane.jpg",
-      alt: "S7 Airlines airplane in flight - Where the bright line begins",
-    },
-    {
-      src: "/bright-line-images/sleeping-girl.jpg",
-      alt: "Peaceful sleep - Where the bright line begins",
-    },
-  ]
 
   return (
     <div
@@ -173,30 +148,6 @@ At the heart of this campaign lies the belief that happiness is not something to
                   creative direction
                 </div>
               </div>
-
-              <div className="group">
-                <div
-                  className={`px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-300 cursor-default border ${
-                    isDarkMode
-                      ? "bg-[#1E3A8A]/20 text-[#60A5FA] border-[#1E3A8A]/30 hover:bg-[#1E3A8A]/30 hover:border-[#60A5FA]/50"
-                      : "bg-[#EFF6FF] text-[#2563EB] border-[#DBEAFE] hover:bg-[#DBEAFE] hover:border-[#60A5FA]/50"
-                  }`}
-                >
-                  copywriting
-                </div>
-              </div>
-
-              <div className="group">
-                <div
-                  className={`px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-300 cursor-default border ${
-                    isDarkMode
-                      ? "bg-[#831843]/20 text-[#F472B6] border-[#831843]/30 hover:bg-[#831843]/30 hover:border-[#F472B6]/50"
-                      : "bg-[#FDF2F8] text-[#DB2777] border-[#FBCFE8] hover:bg-[#FCE7F3] hover:border-[#F472B6]/50"
-                  }`}
-                >
-                  PR
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -215,12 +166,12 @@ At the heart of this campaign lies the belief that happiness is not something to
                   <div className="rounded-full bg-white/20 p-4 backdrop-blur-sm">
                     <Play size={32} className="text-white" />
                   </div>
-                  <span className="font-mono text-sm uppercase">{currentContent.watchVideo}</span>
+                  <span className="font-mono text-sm uppercase">{isRussian ? "Смотреть видео" : "Watch Video"}</span>
                 </div>
               </div>
               <img
-                src="https://i.ytimg.com/vi/BULrhoJt-8c/maxresdefault.jpg"
-                alt="S7 Airlines - Where Does the Bright Line Begin?"
+                src="https://i.ytimg.com/vi/ECxmLZC5dEc/maxresdefault.jpg"
+                alt={currentContent.title}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -228,76 +179,13 @@ At the heart of this campaign lies the belief that happiness is not something to
             <div className="aspect-video w-full">
               <iframe
                 className="w-full h-full rounded-lg"
-                src="https://www.youtube.com/embed/BULrhoJt-8c?autoplay=1"
-                title="S7 Airlines - Where Does the Bright Line Begin?"
+                src="https://www.youtube.com/embed/ECxmLZC5dEc?autoplay=1"
+                title={currentContent.title}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Images Section - Simple Layout 1, 2, 1, 2 */}
-      <div className="container mx-auto px-6 pb-16">
-        <div className="max-w-6xl mx-auto space-y-8">
-          {/* First image - Full width */}
-          <div className="w-full">
-            <div className="w-full h-auto">
-              <img
-                src={images[0].src || "/placeholder.svg"}
-                alt={images[0].alt}
-                className="w-full h-auto object-contain"
-              />
-            </div>
-          </div>
-
-          {/* Second row - Two images side by side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="w-full h-auto">
-              <img
-                src={images[1].src || "/placeholder.svg"}
-                alt={images[1].alt}
-                className="w-full h-auto object-contain"
-              />
-            </div>
-            <div className="w-full h-auto">
-              <img
-                src={images[2].src || "/placeholder.svg"}
-                alt={images[2].alt}
-                className="w-full h-auto object-contain"
-              />
-            </div>
-          </div>
-
-          {/* Third row - Full width */}
-          <div className="w-full">
-            <div className="w-full h-auto">
-              <img
-                src={images[3].src || "/placeholder.svg"}
-                alt={images[3].alt}
-                className="w-full h-auto object-contain"
-              />
-            </div>
-          </div>
-
-          {/* Fourth row - Two images side by side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="w-full h-auto">
-              <img
-                src={images[4].src || "/placeholder.svg"}
-                alt={images[4].alt}
-                className="w-full h-auto object-contain"
-              />
-            </div>
-            <div className="w-full h-auto">
-              <img
-                src={images[5].src || "/placeholder.svg"}
-                alt={images[5].alt}
-                className="w-full h-auto object-contain"
-              />
-            </div>
-          </div>
         </div>
       </div>
 
