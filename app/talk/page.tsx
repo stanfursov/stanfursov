@@ -206,7 +206,9 @@ export default function Talk() {
       </div>
 
       {/* Contact Buttons - Fixed Position */}
-      <div className="fixed bottom-32 left-1/2 transform -translate-x-1/2 flex flex-wrap gap-4 justify-center z-40">
+      <div className="fixed bottom-32 left-1/2 transform -translate-x-1/2 flex flex-wrap gap-4 justify-center z-40 items-center">
+        {" "}
+        {/* Добавлен items-center */}
         <a
           href="mailto:stanfursov@icloud.com"
           className={`flex items-center space-x-3 px-8 py-4 rounded-full backdrop-blur-xl transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 font-mono text-sm ${

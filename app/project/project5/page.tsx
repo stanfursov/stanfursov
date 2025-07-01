@@ -62,7 +62,7 @@ export default function S7AddOnsCase() {
   useEffect(() => {
     const lazyLoadOptions = {
       root: null,
-      rootMargin: "100px", // Start loading 100px before the video enters viewport
+      rootMargin: "200px", // Start loading 200px before the video enters viewport
       threshold: 0.1,
     }
 
@@ -70,44 +70,48 @@ export default function S7AddOnsCase() {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           const index = Number.parseInt(entry.target.getAttribute("data-video-index") || "0")
+          console.log(`Loading video ${index}`)
           setLoadedVideos((prev) => new Set([...prev, index]))
           lazyLoadObserver.unobserve(entry.target)
         }
       })
     }, lazyLoadOptions)
 
-    // Observe all video containers
-    videoContainerRefs.current.forEach((container, index) => {
-      if (container) {
-        container.setAttribute("data-video-index", index.toString())
-        lazyLoadObserver.observe(container)
-      }
-    })
+    // Observe all video containers after they're rendered
+    setTimeout(() => {
+      videoContainerRefs.current.forEach((container, index) => {
+        if (container && !loadedVideos.has(index)) {
+          container.setAttribute("data-video-index", index.toString())
+          lazyLoadObserver.observe(container)
+          console.log(`Observing container ${index}`)
+        }
+      })
+    }, 100)
 
     return () => {
       lazyLoadObserver.disconnect()
     }
-  }, [])
+  }, []) // Remove loadedVideos dependency to avoid re-running
 
   // Setup Intersection Observer for video playback
   useEffect(() => {
     const playbackOptions = {
       root: null,
-      rootMargin: "0px",
+      rootMargin: "-10%",
       threshold: 0.5,
     }
 
     const playbackObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        const index = Number.parseInt(entry.target.getAttribute("data-video-index") || "0")
-        const video = videoRefs.current[index]
-
-        if (!video || !loadedVideos.has(index)) return
+        const video = entry.target as HTMLVideoElement
+        const index = Number.parseInt(video.getAttribute("data-video-index") || "0")
 
         if (entry.isIntersecting) {
+          console.log(`Playing video ${index}`)
           video.play().catch((e) => console.log("Auto-play prevented:", e))
           setPlayingVideos((prev) => new Set([...prev, index]))
         } else {
+          console.log(`Pausing video ${index}`)
           video.pause()
           setPlayingVideos((prev) => {
             const newSet = new Set(prev)
@@ -118,10 +122,12 @@ export default function S7AddOnsCase() {
       })
     }, playbackOptions)
 
-    // Observe loaded videos
+    // Observe videos that are loaded
     videoRefs.current.forEach((video, index) => {
       if (video && loadedVideos.has(index)) {
+        video.setAttribute("data-video-index", index.toString())
         playbackObserver.observe(video)
+        console.log(`Observing video ${index} for playback`)
       }
     })
 
@@ -159,7 +165,6 @@ export default function S7AddOnsCase() {
       src: "/s7-addons/girl.mp4",
       alt: "S7 Girl Animation",
       size: "full",
-      poster: "/placeholder.svg?height=1080&width=1920&text=Girl+Animation",
       autoPlay: true,
       priority: true,
     },
@@ -167,7 +172,6 @@ export default function S7AddOnsCase() {
       src: "/s7-addons/plane.mp4",
       alt: "S7 Plane Animation",
       size: "half",
-      poster: "/placeholder.svg?height=720&width=1280&text=Plane+Animation",
       autoPlay: true,
       priority: true,
     },
@@ -175,25 +179,21 @@ export default function S7AddOnsCase() {
       src: "/s7-addons/fur.mp4",
       alt: "S7 Fur Animation",
       size: "half",
-      poster: "/placeholder.svg?height=720&width=1280&text=Fur+Animation",
     },
     {
       src: "/s7-addons/old.mp4",
       alt: "S7 Old Animation",
       size: "wide",
-      poster: "/placeholder.svg?height=600&width=1400&text=Old+Man+Animation",
     },
     {
       src: "/s7-addons/family.mp4",
       alt: "S7 Family Animation",
       size: "half",
-      poster: "/placeholder.svg?height=720&width=1280&text=Family+Animation",
     },
     {
       src: "/s7-addons/bag.mp4",
       alt: "S7 Bag Animation",
       size: "half",
-      poster: "/placeholder.svg?height=720&width=1280&text=Bag+Animation",
     },
   ]
 
@@ -256,9 +256,17 @@ export default function S7AddOnsCase() {
     const isLoaded = loadedVideos.has(index)
     const hasError = videoErrors[index]
 
+    console.log(`Rendering video ${index}, isLoaded: ${isLoaded}, hasError: ${hasError}`)
+
     if (!isLoaded) {
       return (
-        <div ref={(el) => (videoContainerRefs.current[index] = el)} className={className}>
+        <div
+          ref={(el) => {
+            videoContainerRefs.current[index] = el
+            console.log(`Container ${index} ref set:`, !!el)
+          }}
+          className={className}
+        >
           <VideoPlaceholder video={video} index={index} className="w-full h-full" />
         </div>
       )
@@ -278,13 +286,15 @@ export default function S7AddOnsCase() {
     return (
       <div className={className}>
         <video
-          ref={(el) => (videoRefs.current[index] = el)}
+          ref={(el) => {
+            videoRefs.current[index] = el
+            console.log(`Video ${index} ref set:`, !!el)
+          }}
           className="w-full h-full object-cover"
           playsInline
           muted
           loop
           preload="metadata"
-          poster={video.poster}
           onError={() => handleVideoError(index)}
           onLoadedData={() => handleVideoLoad(index)}
           onCanPlay={() => console.log(`Video ${index} can play: ${video.src}`)}
