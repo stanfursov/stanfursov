@@ -238,7 +238,7 @@ Production: Bazelevs`,
               preload="metadata"
               poster="/video-previews/reliable-support-preview.jpeg"
             >
-              <source src="/videos/reliable-support.mp4" type="video/mp4" />
+              <source src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/reliable-support-HmrryVF86pbv9kSfjyQQoBbdFs8f1R.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
 

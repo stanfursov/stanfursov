@@ -162,36 +162,36 @@ export default function S7AddOnsCase() {
 
   const videos = [
     {
-      src: "/s7-addons/girl.mp4",
+      src: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/01_S7%20Girl-1-TIVQpXwGIYa0XMNY6kzhD9Z0Ja9r9u.mp4",
       alt: "S7 Girl Animation",
       size: "full",
       autoPlay: true,
       priority: true,
     },
     {
-      src: "/s7-addons/plane.mp4",
+      src: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/5_%20S7%20Plane%201-1-GyujEKXKCIjT4xjkLQgZhgGQNyssHL.mp4",
       alt: "S7 Plane Animation",
       size: "half",
       autoPlay: true,
       priority: true,
     },
     {
-      src: "/s7-addons/fur.mp4",
+      src: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/3_S7%20Fur-1-FDvr07m85nVfY1BoEp5vDaIPeVVSyI.mp4",
       alt: "S7 Fur Animation",
       size: "half",
     },
     {
-      src: "/s7-addons/old.mp4",
+      src: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/8_S7%20Il%20Old%201-1-Hnt01N6vzAB5cOHkGqyqrzDjjNRig2.mp4",
       alt: "S7 Old Animation",
       size: "wide",
     },
     {
-      src: "/s7-addons/family.mp4",
+      src: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/10_S7%20Family%20360-1-jRF4BXf9APjIWNbsKBj45dljjZkDkx.mp4",
       alt: "S7 Family Animation",
       size: "half",
     },
     {
-      src: "/s7-addons/bag.mp4",
+      src: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/9_S7%20Bag-1-b8rdLZHNsFX4vObAM52r5GiPjLwF8p.mp4",
       alt: "S7 Bag Animation",
       size: "half",
     },
